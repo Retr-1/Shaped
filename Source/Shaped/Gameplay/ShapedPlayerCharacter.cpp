@@ -4,6 +4,8 @@
 #include "Components/CapsuleComponent.h"
 #include "Components/InputComponent.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Components/SplineComponent.h"
+#include "Components/SplineMeshComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Core/ShapedGameStateBase.h"
 #include "DrawDebugHelpers.h"
@@ -41,6 +43,11 @@ AShapedPlayerCharacter::AShapedPlayerCharacter()
 	FirstPersonHandsMesh->SetRelativeRotation(FRotator(2.0f, -15.0f, 5.0f));
 
 	GetMesh()->SetOwnerNoSee(true);
+
+	DragSpline = CreateDefaultSubobject<USplineComponent>(TEXT("DragSpline"));
+	DragSpline->SetMobility(EComponentMobility::Movable);
+	DragSpline->SetupAttachment(GetRootComponent());
+	DragSpline->SetClosedLoop(false);
 }
 
 void AShapedPlayerCharacter::BeginPlay()
@@ -48,6 +55,14 @@ void AShapedPlayerCharacter::BeginPlay()
 	Super::BeginPlay();
 	CurrentHealth = MaxHealth;
 	OnPlayerHealthChanged.Broadcast(CurrentHealth, MaxHealth);
+	if (DragSpline)
+	{
+		DragSpline->SetMobility(EComponentMobility::Movable);
+	}
+
+	EnsureDragSplineMeshCount(DragTubeSegmentCount);
+
+	SetDragSplineVisible(false);
 }
 
 void AShapedPlayerCharacter::Tick(float DeltaSeconds)
@@ -55,6 +70,7 @@ void AShapedPlayerCharacter::Tick(float DeltaSeconds)
 	Super::Tick(DeltaSeconds);
 	UpdateHoveredShape();
 	UpdateDraggedShape(DeltaSeconds);
+	UpdateDragSplineVisual();
 
 	if (bIsDragging)
 	{
@@ -197,6 +213,21 @@ FVector AShapedPlayerCharacter::GetCurrentDragTargetLocation() const
 	}
 
 	return FirstPersonCamera->GetComponentLocation() + (FirstPersonCamera->GetForwardVector() * DragDistance);
+}
+
+FVector AShapedPlayerCharacter::GetDragOriginLocation() const
+{
+	if (FirstPersonHandsMesh)
+	{
+		if (DragOriginSocketName != NAME_None && FirstPersonHandsMesh->DoesSocketExist(DragOriginSocketName))
+		{
+			return FirstPersonHandsMesh->GetSocketLocation(DragOriginSocketName);
+		}
+
+		return FirstPersonHandsMesh->GetComponentLocation();
+	}
+
+	return FirstPersonCamera ? FirstPersonCamera->GetComponentLocation() : GetActorLocation();
 }
 
 void AShapedPlayerCharacter::AdjustDragDistance(float Value)
@@ -406,4 +437,144 @@ bool AShapedPlayerCharacter::IsDraggedShapeOnScreen() const
 	}
 
 	return false;
+}
+
+void AShapedPlayerCharacter::UpdateDragSplineVisual()
+{
+	if (!DragSpline)
+	{
+		return;
+	}
+
+	const bool bShouldShowSpline = bIsDragging && CurrentDraggedShape;
+	SetDragSplineVisible(bShouldShowSpline);
+
+	if (!bShouldShowSpline)
+	{
+		return;
+	}
+
+	const FVector DragOriginWorld = GetDragOriginLocation();
+	const FVector DragTargetWorld = GetCurrentDragTargetLocation();
+	const FVector DraggedObjectWorld = CurrentDraggedShape->GetActorLocation();
+	const FTransform SplineTransform = DragSpline->GetComponentTransform();
+
+	const TArray<FVector> LocalPoints =
+	{
+		SplineTransform.InverseTransformPosition(DragOriginWorld),
+		SplineTransform.InverseTransformPosition(DragTargetWorld),
+		SplineTransform.InverseTransformPosition(DraggedObjectWorld)
+	};
+
+	const FVector StartTangent = (LocalPoints[1] - LocalPoints[0]) * 0.5f;
+	const FVector MiddleTangent = (LocalPoints[2] - LocalPoints[0]) * 0.5f;
+	const FVector EndTangent = (LocalPoints[2] - LocalPoints[1]) * 0.5f;
+
+	DragSpline->ClearSplinePoints(false);
+	for (int32 PointIndex = 0; PointIndex < LocalPoints.Num(); ++PointIndex)
+	{
+		DragSpline->AddSplinePoint(LocalPoints[PointIndex], ESplineCoordinateSpace::Local, false);
+		DragSpline->SetSplinePointType(PointIndex, ESplinePointType::CurveCustomTangent, false);
+	}
+
+	DragSpline->SetTangentAtSplinePoint(0, StartTangent, ESplineCoordinateSpace::Local, false);
+	DragSpline->SetTangentAtSplinePoint(1, MiddleTangent, ESplineCoordinateSpace::Local, false);
+	DragSpline->SetTangentAtSplinePoint(2, EndTangent, ESplineCoordinateSpace::Local, false);
+	DragSpline->UpdateSpline();
+
+	EnsureDragSplineMeshCount(DragTubeSegmentCount);
+
+	const float SplineLength = DragSpline->GetSplineLength();
+	if (SplineLength <= KINDA_SMALL_NUMBER || DragSplineMeshes.Num() == 0)
+	{
+		return;
+	}
+
+	for (int32 SegmentIndex = 0; SegmentIndex < DragSplineMeshes.Num(); ++SegmentIndex)
+	{
+		if (!DragSplineMeshes[SegmentIndex])
+		{
+			continue;
+		}
+
+		USplineMeshComponent* SplineMesh = DragSplineMeshes[SegmentIndex];
+		SplineMesh->SetMobility(EComponentMobility::Movable);
+		SplineMesh->SetForwardAxis(ESplineMeshAxis::X, false);
+		SplineMesh->SetVisibility(true);
+
+		const float StartDistance = (SplineLength * SegmentIndex) / DragSplineMeshes.Num();
+		const float EndDistance = (SplineLength * (SegmentIndex + 1)) / DragSplineMeshes.Num();
+		const FVector StartPosition = DragSpline->GetLocationAtDistanceAlongSpline(StartDistance, ESplineCoordinateSpace::Local);
+		const FVector SegmentStartTangent = DragSpline->GetTangentAtDistanceAlongSpline(StartDistance, ESplineCoordinateSpace::Local);
+		const FVector EndPosition = DragSpline->GetLocationAtDistanceAlongSpline(EndDistance, ESplineCoordinateSpace::Local);
+		const FVector SegmentEndTangent = DragSpline->GetTangentAtDistanceAlongSpline(EndDistance, ESplineCoordinateSpace::Local);
+
+		SplineMesh->SetStartAndEnd(StartPosition, SegmentStartTangent, EndPosition, SegmentEndTangent, true);
+		SplineMesh->SetStartScale(FVector2D(DragTubeWidth, DragTubeWidth), true);
+		SplineMesh->SetEndScale(FVector2D(DragTubeWidth, DragTubeWidth), true);
+		SplineMesh->SetStartRoll(0.0f, true);
+		SplineMesh->SetEndRoll(0.0f, true);
+	}
+}
+
+void AShapedPlayerCharacter::EnsureDragSplineMeshCount(int32 DesiredCount)
+{
+	if (!DragSpline || DesiredCount <= 0)
+	{
+		return;
+	}
+
+	while (DragSplineMeshes.Num() < DesiredCount)
+	{
+		USplineMeshComponent* SplineMesh = NewObject<USplineMeshComponent>(this);
+		if (!SplineMesh)
+		{
+			return;
+		}
+
+		SplineMesh->SetMobility(EComponentMobility::Movable);
+		SplineMesh->SetupAttachment(DragSpline);
+		SplineMesh->RegisterComponent();
+		SplineMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		SplineMesh->SetVisibility(false);
+		SplineMesh->SetForwardAxis(ESplineMeshAxis::X, false);
+		SplineMesh->SetStartRoll(0.0f, false);
+		SplineMesh->SetEndRoll(0.0f, false);
+
+		if (DragTubeMesh)
+		{
+			SplineMesh->SetStaticMesh(DragTubeMesh);
+		}
+
+		if (DragTubeMaterial)
+		{
+			SplineMesh->SetMaterial(0, DragTubeMaterial);
+		}
+
+		DragSplineMeshes.Add(SplineMesh);
+	}
+
+	for (int32 MeshIndex = 0; MeshIndex < DragSplineMeshes.Num(); ++MeshIndex)
+	{
+		if (DragSplineMeshes[MeshIndex])
+		{
+			DragSplineMeshes[MeshIndex]->SetVisibility(MeshIndex < DesiredCount);
+		}
+	}
+}
+
+void AShapedPlayerCharacter::SetDragSplineVisible(bool bVisible)
+{
+	if (DragSpline)
+	{
+		DragSpline->SetVisibility(bVisible);
+	}
+
+	for (USplineMeshComponent* SplineMesh : DragSplineMeshes)
+	{
+		if (SplineMesh)
+		{
+			SplineMesh->SetVisibility(bVisible);
+		}
+	}
 }

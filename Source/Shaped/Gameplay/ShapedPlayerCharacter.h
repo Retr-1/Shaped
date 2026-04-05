@@ -7,6 +7,10 @@
 
 class UCameraComponent;
 class USkeletalMeshComponent;
+class USplineComponent;
+class USplineMeshComponent;
+class UMaterialInterface;
+class UStaticMesh;
 class AShapeObject;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnPlayerHealthChangedSignature, float, NewHealth, float, MaxHealth);
@@ -57,6 +61,9 @@ public:
 	EShapedGamePhase GetCurrentGamePhase() const;
 
 	UFUNCTION(BlueprintPure, Category = "Player|Interaction")
+	FVector GetDragOriginLocation() const;
+
+	UFUNCTION(BlueprintPure, Category = "Player|Interaction")
 	bool IsDragging() const { return bIsDragging; }
 
 	UFUNCTION(BlueprintPure, Category = "Player|Interaction")
@@ -74,6 +81,9 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Player|View")
 	TObjectPtr<USkeletalMeshComponent> FirstPersonHandsMesh;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Player|Interaction")
+	TObjectPtr<USplineComponent> DragSpline;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Player", meta = (ClampMin = "1.0"))
 	float MaxHealth = 100.0f;
@@ -108,11 +118,29 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Player|Interaction", meta = (ClampMin = "1.0"))
 	float DragForce = 2500.0f;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Player|Interaction|Visual")
+	FName DragOriginSocketName = TEXT("DragOrigin");
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Player|Interaction|Visual")
+	TObjectPtr<UStaticMesh> DragTubeMesh;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Player|Interaction|Visual")
+	TObjectPtr<UMaterialInterface> DragTubeMaterial;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Player|Interaction|Visual", meta = (ClampMin = "0.1"))
+	float DragTubeWidth = 4.0f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Player|Interaction|Visual", meta = (ClampMin = "2", ClampMax = "32"))
+	int32 DragTubeSegmentCount = 8;
+
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Player|Interaction")
 	TObjectPtr<AShapeObject> CurrentHoveredShape;
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Player|Interaction")
 	TObjectPtr<AShapeObject> CurrentDraggedShape;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Player|Interaction|Visual")
+	TArray<TObjectPtr<USplineMeshComponent>> DragSplineMeshes;
 
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaSeconds) override;
@@ -136,5 +164,8 @@ protected:
 	void UpdateHoveredShape();
 	void SetHoveredShape(AShapeObject* NewHoveredShape);
 	void UpdateDraggedShape(float DeltaSeconds);
+	void UpdateDragSplineVisual();
+	void EnsureDragSplineMeshCount(int32 DesiredCount);
+	void SetDragSplineVisible(bool bVisible);
 	void DrawDragDebugPoint() const;
 };

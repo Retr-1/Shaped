@@ -7,6 +7,7 @@
 
 class UCameraComponent;
 class USkeletalMeshComponent;
+class AShapeObject;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnPlayerHealthChangedSignature, float, NewHealth, float, MaxHealth);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnPlayerDiedSignature);
@@ -58,6 +59,12 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Player|Interaction")
 	bool IsDragging() const { return bIsDragging; }
 
+	UFUNCTION(BlueprintPure, Category = "Player|Interaction")
+	AShapeObject* GetHoveredShape() const { return CurrentHoveredShape; }
+
+	UFUNCTION(BlueprintPure, Category = "Player|Interaction")
+	AShapeObject* GetDraggedShape() const { return CurrentDraggedShape; }
+
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Player|View")
 	TObjectPtr<UCameraComponent> FirstPersonCamera;
@@ -74,7 +81,32 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Player|Interaction")
 	bool bIsDragging = false;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Player|Interaction", meta = (ClampMin = "100.0"))
+	float HoverTraceDistance = 1200.0f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Player|Interaction", meta = (ClampMin = "50.0"))
+	float DragDistance = 350.0f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Player|Interaction", meta = (ClampMin = "50.0"))
+	float MinDragDistance = 150.0f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Player|Interaction", meta = (ClampMin = "50.0"))
+	float MaxDragDistance = 800.0f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Player|Interaction", meta = (ClampMin = "1.0"))
+	float DragScrollStep = 50.0f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Player|Interaction", meta = (ClampMin = "1.0"))
+	float DragForce = 2500.0f;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Player|Interaction")
+	TObjectPtr<AShapeObject> CurrentHoveredShape;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Player|Interaction")
+	TObjectPtr<AShapeObject> CurrentDraggedShape;
+
 	virtual void BeginPlay() override;
+	virtual void Tick(float DeltaSeconds) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	virtual void FireCurrentAmmo_Implementation();
 	virtual void Interact_Implementation();
@@ -87,4 +119,7 @@ protected:
 	void LookUpAtRate(float Value);
 	void HandlePrimaryActionPressed();
 	void HandlePrimaryActionReleased();
+	void AdjustDragDistance(float Value);
+	void UpdateHoveredShape();
+	void SetHoveredShape(AShapeObject* NewHoveredShape);
 };

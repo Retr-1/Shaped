@@ -6,6 +6,7 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Core/ShapedGameStateBase.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Gameplay/ShapeObject.h"
 
 AShapedPlayerCharacter::AShapedPlayerCharacter()
 {
@@ -45,6 +46,12 @@ void AShapedPlayerCharacter::BeginPlay()
 	OnPlayerHealthChanged.Broadcast(CurrentHealth, MaxHealth);
 }
 
+void AShapedPlayerCharacter::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+	UpdateHoveredShape();
+}
+
 void AShapedPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
@@ -55,6 +62,7 @@ void AShapedPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerIn
 	PlayerInputComponent->BindAxis(TEXT("MoveRight"), this, &AShapedPlayerCharacter::MoveRight);
 	PlayerInputComponent->BindAxis(TEXT("Turn"), this, &AShapedPlayerCharacter::TurnAtRate);
 	PlayerInputComponent->BindAxis(TEXT("LookUp"), this, &AShapedPlayerCharacter::LookUpAtRate);
+	PlayerInputComponent->BindAxis(TEXT("AdjustDragDistance"), this, &AShapedPlayerCharacter::AdjustDragDistance);
 
 	PlayerInputComponent->BindAction(TEXT("Jump"), IE_Pressed, this, &ACharacter::Jump);
 	PlayerInputComponent->BindAction(TEXT("Jump"), IE_Released, this, &ACharacter::StopJumping);
@@ -89,12 +97,17 @@ void AShapedPlayerCharacter::Interact_Implementation()
 
 void AShapedPlayerCharacter::StartDragging_Implementation()
 {
-	bIsDragging = true;
+	if (CurrentHoveredShape)
+	{
+		CurrentDraggedShape = CurrentHoveredShape;
+		bIsDragging = true;
+	}
 }
 
 void AShapedPlayerCharacter::StopDragging_Implementation()
 {
 	bIsDragging = false;
+	CurrentDraggedShape = nullptr;
 }
 
 void AShapedPlayerCharacter::MoveForward(float Value)
@@ -155,4 +168,56 @@ EShapedGamePhase AShapedPlayerCharacter::GetCurrentGamePhase() const
 	}
 
 	return EShapedGamePhase::Preparation;
+}
+
+void AShapedPlayerCharacter::AdjustDragDistance(float Value)
+{
+	if (FMath::IsNearlyZero(Value))
+	{
+		return;
+	}
+
+	DragDistance = FMath::Clamp(DragDistance + (Value * DragScrollStep), MinDragDistance, MaxDragDistance);
+}
+
+void AShapedPlayerCharacter::UpdateHoveredShape()
+{
+	if (!GetWorld() || !FirstPersonCamera)
+	{
+		SetHoveredShape(nullptr);
+		return;
+	}
+
+	FHitResult HitResult;
+	const FVector TraceStart = FirstPersonCamera->GetComponentLocation();
+	const FVector TraceEnd = TraceStart + (FirstPersonCamera->GetForwardVector() * HoverTraceDistance);
+	FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(PlayerHoverTrace), false, this);
+
+	if (CurrentDraggedShape)
+	{
+		QueryParams.AddIgnoredActor(CurrentDraggedShape);
+	}
+
+	const bool bHit = GetWorld()->LineTraceSingleByChannel(HitResult, TraceStart, TraceEnd, ECC_Visibility, QueryParams);
+	SetHoveredShape(bHit ? Cast<AShapeObject>(HitResult.GetActor()) : nullptr);
+}
+
+void AShapedPlayerCharacter::SetHoveredShape(AShapeObject* NewHoveredShape)
+{
+	if (CurrentHoveredShape == NewHoveredShape)
+	{
+		return;
+	}
+
+	if (CurrentHoveredShape)
+	{
+		CurrentHoveredShape->SetHighlighted(false);
+	}
+
+	CurrentHoveredShape = NewHoveredShape;
+
+	if (CurrentHoveredShape)
+	{
+		CurrentHoveredShape->SetHighlighted(true);
+	}
 }

@@ -5,12 +5,14 @@
 #include "GameFramework/PlayerController.h"
 #include "Gameplay/BaseCore.h"
 #include "Gameplay/ShapedPlayerCharacter.h"
+#include "UI/ShapedHUD.h"
 
 AShapedGameModeBase::AShapedGameModeBase()
 {
 	GameStateClass = AShapedGameStateBase::StaticClass();
 	DefaultPawnClass = AShapedPlayerCharacter::StaticClass();
 	BaseCoreClass = ABaseCore::StaticClass();
+	HUDClass = AShapedHUD::StaticClass();
 }
 
 void AShapedGameModeBase::BeginPlay()

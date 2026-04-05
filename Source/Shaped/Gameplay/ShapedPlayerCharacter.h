@@ -91,13 +91,16 @@ protected:
 	float DragDistance = 350.0f;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Player|Interaction", meta = (ClampMin = "50.0"))
+	float DefaultDragDistance = 300.0f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Player|Interaction", meta = (ClampMin = "50.0"))
 	float MinDragDistance = 150.0f;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Player|Interaction", meta = (ClampMin = "50.0"))
-	float MaxDragDistance = 800.0f;
+	float MaxDragDistance = 1500.0f;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Player|Interaction", meta = (ClampMin = "1.0"))
-	float DragDistanceSafetyMargin = 100.0f;
+	float DragDistanceSafetyMargin = 400.0f;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Player|Interaction", meta = (ClampMin = "1.0"))
 	float DragScrollStep = 50.0f;

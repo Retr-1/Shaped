@@ -110,6 +110,7 @@ void AShapedPlayerCharacter::StartDragging_Implementation()
 {
 	if (CurrentHoveredShape)
 	{
+		DragDistance = FMath::Clamp(DefaultDragDistance, MinDragDistance, GetMaxVirtualDragDistance());
 		CurrentDraggedShape = CurrentHoveredShape;
 		CurrentDraggedShape->SetHighlighted(true);
 		CurrentHoveredShape = nullptr;

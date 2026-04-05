@@ -312,14 +312,21 @@ void AShapedPlayerCharacter::SetHoveredShape(AShapeObject* NewHoveredShape)
 
 void AShapedPlayerCharacter::UpdateDraggedShape(float DeltaSeconds)
 {
-	if (!bIsDragging || !CurrentDraggedShape || GetCurrentGamePhase() != EShapedGamePhase::Preparation)
+	if (!bIsDragging)
 	{
+		return;
+	}
+
+	if (!CurrentDraggedShape || GetCurrentGamePhase() != EShapedGamePhase::Preparation)
+	{
+		StopDragging();
 		return;
 	}
 
 	UStaticMeshComponent* DraggedMeshComponent = CurrentDraggedShape->GetShapeMeshComponent();
 	if (!DraggedMeshComponent || !DraggedMeshComponent->IsSimulatingPhysics())
 	{
+		StopDragging();
 		return;
 	}
 

@@ -286,7 +286,7 @@ void AShapedPlayerCharacter::UpdateDraggedShape(float DeltaSeconds)
 	const FVector PullDirection = ToTarget.GetSafeNormal();
 	const float DistanceScale = FMath::Max(1.0f, ToTarget.Size() / 100.0f);
 	const FVector PullForce = PullDirection * DragForce * DistanceScale;
-	DraggedMeshComponent->AddForce(PullForce, NAME_None, true);
+	DraggedMeshComponent->AddForce(PullForce, NAME_None, false);
 }
 
 void AShapedPlayerCharacter::DrawDragDebugPoint() const

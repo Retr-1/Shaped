@@ -97,6 +97,9 @@ protected:
 	float MaxDragDistance = 800.0f;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Player|Interaction", meta = (ClampMin = "1.0"))
+	float DragDistanceSafetyMargin = 100.0f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Player|Interaction", meta = (ClampMin = "1.0"))
 	float DragScrollStep = 50.0f;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Player|Interaction", meta = (ClampMin = "1.0"))
@@ -125,6 +128,7 @@ protected:
 	void AdjustDragDistance(float Value);
 	void IncreaseDragDistance();
 	void DecreaseDragDistance();
+	float GetMaxVirtualDragDistance() const;
 	bool IsDraggedShapeOnScreen() const;
 	void UpdateHoveredShape();
 	void SetHoveredShape(AShapeObject* NewHoveredShape);

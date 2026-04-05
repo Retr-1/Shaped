@@ -205,7 +205,7 @@ void AShapedPlayerCharacter::AdjustDragDistance(float Value)
 		return;
 	}
 
-	DragDistance = FMath::Clamp(DragDistance + (Value * DragScrollStep), MinDragDistance, MaxDragDistance);
+	DragDistance = FMath::Clamp(DragDistance + (Value * DragScrollStep), MinDragDistance, GetMaxVirtualDragDistance());
 	UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("DragDistance: %.1f"), DragDistance), true, true, FLinearColor::Yellow, 0.0f);
 }
 
@@ -217,6 +217,11 @@ void AShapedPlayerCharacter::IncreaseDragDistance()
 void AShapedPlayerCharacter::DecreaseDragDistance()
 {
 	AdjustDragDistance(-1.0f);
+}
+
+float AShapedPlayerCharacter::GetMaxVirtualDragDistance() const
+{
+	return FMath::Max(MinDragDistance, MaxDragDistance - DragDistanceSafetyMargin);
 }
 
 void AShapedPlayerCharacter::UpdateHoveredShape()
@@ -239,7 +244,18 @@ void AShapedPlayerCharacter::UpdateHoveredShape()
 	FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(PlayerHoverTrace), false, this);
 
 	const bool bHit = GetWorld()->LineTraceSingleByChannel(HitResult, TraceStart, TraceEnd, ECC_Visibility, QueryParams);
-	SetHoveredShape(bHit ? Cast<AShapeObject>(HitResult.GetActor()) : nullptr);
+
+	AShapeObject* NewHoveredShape = bHit ? Cast<AShapeObject>(HitResult.GetActor()) : nullptr;
+	if (NewHoveredShape)
+	{
+		const float DistanceToHoveredShape = FVector::Dist(GetActorLocation(), NewHoveredShape->GetActorLocation());
+		if (DistanceToHoveredShape > MaxDragDistance)
+		{
+			NewHoveredShape = nullptr;
+		}
+	}
+
+	SetHoveredShape(NewHoveredShape);
 }
 
 void AShapedPlayerCharacter::SetHoveredShape(AShapeObject* NewHoveredShape)
@@ -276,6 +292,13 @@ void AShapedPlayerCharacter::UpdateDraggedShape(float DeltaSeconds)
 	}
 
 	if (!IsDraggedShapeOnScreen())
+	{
+		StopDragging();
+		return;
+	}
+
+	const float DistanceToDraggedObject = FVector::Dist(GetActorLocation(), CurrentDraggedShape->GetActorLocation());
+	if (DistanceToDraggedObject > MaxDragDistance)
 	{
 		StopDragging();
 		return;

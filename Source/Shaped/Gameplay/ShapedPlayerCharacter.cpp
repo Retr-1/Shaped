@@ -8,6 +8,7 @@
 #include "Core/ShapedGameStateBase.h"
 #include "DrawDebugHelpers.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "GameFramework/PlayerController.h"
 #include "Gameplay/ShapeObject.h"
 #include "Kismet/KismetSystemLibrary.h"
 
@@ -274,6 +275,12 @@ void AShapedPlayerCharacter::UpdateDraggedShape(float DeltaSeconds)
 		return;
 	}
 
+	if (!IsDraggedShapeOnScreen())
+	{
+		StopDragging();
+		return;
+	}
+
 	const FVector TargetLocation = GetCurrentDragTargetLocation();
 	const FVector CurrentLocation = DraggedMeshComponent->GetComponentLocation();
 	const FVector ToTarget = TargetLocation - CurrentLocation;
@@ -306,4 +313,73 @@ void AShapedPlayerCharacter::DrawDragDebugPoint() const
 		0.0f,
 		0,
 		1.5f);
+}
+
+bool AShapedPlayerCharacter::IsDraggedShapeOnScreen() const
+{
+	if (!CurrentDraggedShape || !GetWorld())
+	{
+		return false;
+	}
+
+	const APlayerController* PlayerController = Cast<APlayerController>(GetController());
+	if (!PlayerController)
+	{
+		return false;
+	}
+
+	FVector2D ScreenPosition;
+	const bool bProjected = PlayerController->ProjectWorldLocationToScreen(CurrentDraggedShape->GetActorLocation(), ScreenPosition, true);
+	if (!bProjected)
+	{
+		return false;
+	}
+
+	int32 ViewportSizeX = 0;
+	int32 ViewportSizeY = 0;
+	PlayerController->GetViewportSize(ViewportSizeX, ViewportSizeY);
+
+	const UStaticMeshComponent* DraggedMeshComponent = CurrentDraggedShape->GetShapeMeshComponent();
+	if (!DraggedMeshComponent)
+	{
+		return ScreenPosition.X >= 0.0f
+			&& ScreenPosition.X <= static_cast<float>(ViewportSizeX)
+			&& ScreenPosition.Y >= 0.0f
+			&& ScreenPosition.Y <= static_cast<float>(ViewportSizeY);
+	}
+
+	const FBoxSphereBounds MeshBounds = DraggedMeshComponent->Bounds;
+	const FVector BoundsOrigin = MeshBounds.Origin;
+	const FVector BoundsExtent = MeshBounds.BoxExtent;
+
+	const TArray<FVector> BoundingPoints =
+	{
+		BoundsOrigin + FVector( BoundsExtent.X,  BoundsExtent.Y,  BoundsExtent.Z),
+		BoundsOrigin + FVector( BoundsExtent.X,  BoundsExtent.Y, -BoundsExtent.Z),
+		BoundsOrigin + FVector( BoundsExtent.X, -BoundsExtent.Y,  BoundsExtent.Z),
+		BoundsOrigin + FVector( BoundsExtent.X, -BoundsExtent.Y, -BoundsExtent.Z),
+		BoundsOrigin + FVector(-BoundsExtent.X,  BoundsExtent.Y,  BoundsExtent.Z),
+		BoundsOrigin + FVector(-BoundsExtent.X,  BoundsExtent.Y, -BoundsExtent.Z),
+		BoundsOrigin + FVector(-BoundsExtent.X, -BoundsExtent.Y,  BoundsExtent.Z),
+		BoundsOrigin + FVector(-BoundsExtent.X, -BoundsExtent.Y, -BoundsExtent.Z)
+	};
+
+	for (const FVector& BoundingPoint : BoundingPoints)
+	{
+		FVector2D BoundingScreenPosition;
+		if (!PlayerController->ProjectWorldLocationToScreen(BoundingPoint, BoundingScreenPosition, true))
+		{
+			continue;
+		}
+
+		if (BoundingScreenPosition.X >= 0.0f
+			&& BoundingScreenPosition.X <= static_cast<float>(ViewportSizeX)
+			&& BoundingScreenPosition.Y >= 0.0f
+			&& BoundingScreenPosition.Y <= static_cast<float>(ViewportSizeY))
+		{
+			return true;
+		}
+	}
+
+	return false;
 }

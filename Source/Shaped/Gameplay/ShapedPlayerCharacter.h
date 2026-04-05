@@ -125,6 +125,7 @@ protected:
 	void AdjustDragDistance(float Value);
 	void IncreaseDragDistance();
 	void DecreaseDragDistance();
+	bool IsDraggedShapeOnScreen() const;
 	void UpdateHoveredShape();
 	void SetHoveredShape(AShapeObject* NewHoveredShape);
 	void UpdateDraggedShape(float DeltaSeconds);

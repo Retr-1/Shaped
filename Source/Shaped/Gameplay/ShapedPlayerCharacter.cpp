@@ -9,6 +9,7 @@
 #include "DrawDebugHelpers.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Gameplay/ShapeObject.h"
+#include "Kismet/KismetSystemLibrary.h"
 
 AShapedPlayerCharacter::AShapedPlayerCharacter()
 {
@@ -70,13 +71,14 @@ void AShapedPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerIn
 	PlayerInputComponent->BindAxis(TEXT("MoveRight"), this, &AShapedPlayerCharacter::MoveRight);
 	PlayerInputComponent->BindAxis(TEXT("Turn"), this, &AShapedPlayerCharacter::TurnAtRate);
 	PlayerInputComponent->BindAxis(TEXT("LookUp"), this, &AShapedPlayerCharacter::LookUpAtRate);
-	PlayerInputComponent->BindAxis(TEXT("AdjustDragDistance"), this, &AShapedPlayerCharacter::AdjustDragDistance);
 
 	PlayerInputComponent->BindAction(TEXT("Jump"), IE_Pressed, this, &ACharacter::Jump);
 	PlayerInputComponent->BindAction(TEXT("Jump"), IE_Released, this, &ACharacter::StopJumping);
 	PlayerInputComponent->BindAction(TEXT("Interact"), IE_Pressed, this, &AShapedPlayerCharacter::Interact);
 	PlayerInputComponent->BindAction(TEXT("Fire"), IE_Pressed, this, &AShapedPlayerCharacter::HandlePrimaryActionPressed);
 	PlayerInputComponent->BindAction(TEXT("Fire"), IE_Released, this, &AShapedPlayerCharacter::HandlePrimaryActionReleased);
+	PlayerInputComponent->BindAction(TEXT("IncreaseDragDistance"), IE_Pressed, this, &AShapedPlayerCharacter::IncreaseDragDistance);
+	PlayerInputComponent->BindAction(TEXT("DecreaseDragDistance"), IE_Pressed, this, &AShapedPlayerCharacter::DecreaseDragDistance);
 }
 
 void AShapedPlayerCharacter::ApplyDamageToPlayer(float DamageAmount)
@@ -203,6 +205,17 @@ void AShapedPlayerCharacter::AdjustDragDistance(float Value)
 	}
 
 	DragDistance = FMath::Clamp(DragDistance + (Value * DragScrollStep), MinDragDistance, MaxDragDistance);
+	UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("DragDistance: %.1f"), DragDistance), true, true, FLinearColor::Yellow, 0.0f);
+}
+
+void AShapedPlayerCharacter::IncreaseDragDistance()
+{
+	AdjustDragDistance(1.0f);
+}
+
+void AShapedPlayerCharacter::DecreaseDragDistance()
+{
+	AdjustDragDistance(-1.0f);
 }
 
 void AShapedPlayerCharacter::UpdateHoveredShape()

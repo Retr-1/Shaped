@@ -123,6 +123,8 @@ protected:
 	void HandlePrimaryActionPressed();
 	void HandlePrimaryActionReleased();
 	void AdjustDragDistance(float Value);
+	void IncreaseDragDistance();
+	void DecreaseDragDistance();
 	void UpdateHoveredShape();
 	void SetHoveredShape(AShapeObject* NewHoveredShape);
 	void UpdateDraggedShape(float DeltaSeconds);

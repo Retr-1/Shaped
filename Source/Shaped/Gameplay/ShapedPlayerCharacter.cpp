@@ -540,6 +540,8 @@ void AShapedPlayerCharacter::EnsureDragSplineMeshCount(int32 DesiredCount)
 		SplineMesh->SetForwardAxis(ESplineMeshAxis::X, false);
 		SplineMesh->SetStartRoll(0.0f, false);
 		SplineMesh->SetEndRoll(0.0f, false);
+		SplineMesh->CastShadow = false;
+		SplineMesh->bCastDynamicShadow = false;
 
 		if (DragTubeMesh)
 		{

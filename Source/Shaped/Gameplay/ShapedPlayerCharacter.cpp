@@ -100,12 +100,19 @@ void AShapedPlayerCharacter::StartDragging_Implementation()
 	if (CurrentHoveredShape)
 	{
 		CurrentDraggedShape = CurrentHoveredShape;
+		CurrentDraggedShape->SetHighlighted(true);
+		CurrentHoveredShape = nullptr;
 		bIsDragging = true;
 	}
 }
 
 void AShapedPlayerCharacter::StopDragging_Implementation()
 {
+	if (CurrentDraggedShape)
+	{
+		CurrentDraggedShape->SetHighlighted(false);
+	}
+
 	bIsDragging = false;
 	CurrentDraggedShape = nullptr;
 }
@@ -188,15 +195,16 @@ void AShapedPlayerCharacter::UpdateHoveredShape()
 		return;
 	}
 
+	if (bIsDragging || CurrentDraggedShape)
+	{
+		SetHoveredShape(nullptr);
+		return;
+	}
+
 	FHitResult HitResult;
 	const FVector TraceStart = FirstPersonCamera->GetComponentLocation();
 	const FVector TraceEnd = TraceStart + (FirstPersonCamera->GetForwardVector() * HoverTraceDistance);
 	FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(PlayerHoverTrace), false, this);
-
-	if (CurrentDraggedShape)
-	{
-		QueryParams.AddIgnoredActor(CurrentDraggedShape);
-	}
 
 	const bool bHit = GetWorld()->LineTraceSingleByChannel(HitResult, TraceStart, TraceEnd, ECC_Visibility, QueryParams);
 	SetHoveredShape(bHit ? Cast<AShapeObject>(HitResult.GetActor()) : nullptr);

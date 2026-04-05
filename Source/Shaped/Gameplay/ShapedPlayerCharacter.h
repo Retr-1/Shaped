@@ -65,6 +65,9 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Player|Interaction")
 	AShapeObject* GetDraggedShape() const { return CurrentDraggedShape; }
 
+	UFUNCTION(BlueprintPure, Category = "Player|Interaction")
+	FVector GetCurrentDragTargetLocation() const;
+
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Player|View")
 	TObjectPtr<UCameraComponent> FirstPersonCamera;
@@ -122,4 +125,6 @@ protected:
 	void AdjustDragDistance(float Value);
 	void UpdateHoveredShape();
 	void SetHoveredShape(AShapeObject* NewHoveredShape);
+	void UpdateDraggedShape(float DeltaSeconds);
+	void DrawDragDebugPoint() const;
 };

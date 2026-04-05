@@ -4,7 +4,9 @@
 #include "Components/CapsuleComponent.h"
 #include "Components/InputComponent.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Components/StaticMeshComponent.h"
 #include "Core/ShapedGameStateBase.h"
+#include "DrawDebugHelpers.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Gameplay/ShapeObject.h"
 
@@ -50,6 +52,12 @@ void AShapedPlayerCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 	UpdateHoveredShape();
+	UpdateDraggedShape(DeltaSeconds);
+
+	if (bIsDragging)
+	{
+		DrawDragDebugPoint();
+	}
 }
 
 void AShapedPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -177,6 +185,16 @@ EShapedGamePhase AShapedPlayerCharacter::GetCurrentGamePhase() const
 	return EShapedGamePhase::Preparation;
 }
 
+FVector AShapedPlayerCharacter::GetCurrentDragTargetLocation() const
+{
+	if (!FirstPersonCamera)
+	{
+		return GetActorLocation();
+	}
+
+	return FirstPersonCamera->GetComponentLocation() + (FirstPersonCamera->GetForwardVector() * DragDistance);
+}
+
 void AShapedPlayerCharacter::AdjustDragDistance(float Value)
 {
 	if (FMath::IsNearlyZero(Value))
@@ -228,4 +246,51 @@ void AShapedPlayerCharacter::SetHoveredShape(AShapeObject* NewHoveredShape)
 	{
 		CurrentHoveredShape->SetHighlighted(true);
 	}
+}
+
+void AShapedPlayerCharacter::UpdateDraggedShape(float DeltaSeconds)
+{
+	if (!bIsDragging || !CurrentDraggedShape || GetCurrentGamePhase() != EShapedGamePhase::Preparation)
+	{
+		return;
+	}
+
+	UStaticMeshComponent* DraggedMeshComponent = CurrentDraggedShape->GetShapeMeshComponent();
+	if (!DraggedMeshComponent || !DraggedMeshComponent->IsSimulatingPhysics())
+	{
+		return;
+	}
+
+	const FVector TargetLocation = GetCurrentDragTargetLocation();
+	const FVector CurrentLocation = DraggedMeshComponent->GetComponentLocation();
+	const FVector ToTarget = TargetLocation - CurrentLocation;
+
+	if (ToTarget.IsNearlyZero())
+	{
+		return;
+	}
+
+	const FVector PullDirection = ToTarget.GetSafeNormal();
+	const float DistanceScale = FMath::Max(1.0f, ToTarget.Size() / 100.0f);
+	const FVector PullForce = PullDirection * DragForce * DistanceScale;
+	DraggedMeshComponent->AddForce(PullForce, NAME_None, true);
+}
+
+void AShapedPlayerCharacter::DrawDragDebugPoint() const
+{
+	if (!GetWorld())
+	{
+		return;
+	}
+
+	DrawDebugSphere(
+		GetWorld(),
+		GetCurrentDragTargetLocation(),
+		12.0f,
+		16,
+		FColor::Cyan,
+		false,
+		0.0f,
+		0,
+		1.5f);
 }

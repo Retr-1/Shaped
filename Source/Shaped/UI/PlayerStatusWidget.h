@@ -24,16 +24,16 @@ protected:
 	UPROPERTY(Transient)
 	TObjectPtr<AShapedPlayerCharacter> BoundPlayerCharacter;
 
-	UPROPERTY(Transient)
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidgetOptional))
 	TObjectPtr<UProgressBar> HealthBar;
 
-	UPROPERTY(Transient)
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidgetOptional))
 	TObjectPtr<UProgressBar> StaminaBar;
 
-	UPROPERTY(Transient)
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidgetOptional))
 	TObjectPtr<UTextBlock> HealthLabel;
 
-	UPROPERTY(Transient)
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidgetOptional))
 	TObjectPtr<UTextBlock> StaminaLabel;
 
 	UFUNCTION()
@@ -43,7 +43,6 @@ protected:
 	void HandleStaminaChanged(float NewStamina, float MaxStamina);
 
 private:
-	void BuildWidgetTree();
 	void UpdateHealthDisplay(float NewHealth, float MaxHealth);
 	void UpdateStaminaDisplay(float NewStamina, float MaxStamina);
 	void SetBarPercent(UProgressBar* ProgressBar, float CurrentValue, float MaxValue) const;

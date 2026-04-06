@@ -5,6 +5,7 @@
 #include "PlayerStatusWidget.generated.h"
 
 class AShapedPlayerCharacter;
+class AShapedGameModeBase;
 class UProgressBar;
 class UTextBlock;
 
@@ -16,6 +17,7 @@ class SHAPED_API UPlayerStatusWidget : public UUserWidget
 public:
 	virtual void NativeConstruct() override;
 	virtual void NativeDestruct() override;
+	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 
 	UFUNCTION(BlueprintCallable, Category = "Status")
 	void BindToPlayer(AShapedPlayerCharacter* InPlayerCharacter);
@@ -36,6 +38,12 @@ protected:
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidgetOptional))
 	TObjectPtr<UTextBlock> StaminaLabel;
 
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidgetOptional))
+	TObjectPtr<UTextBlock> PhaseLabel;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidgetOptional))
+	TObjectPtr<UTextBlock> PhaseTimerText;
+
 	UFUNCTION()
 	void HandleHealthChanged(float NewHealth, float MaxHealth);
 
@@ -45,6 +53,10 @@ protected:
 private:
 	void UpdateHealthDisplay(float NewHealth, float MaxHealth);
 	void UpdateStaminaDisplay(float NewStamina, float MaxStamina);
+	void UpdatePhaseDisplay();
 	void SetBarPercent(UProgressBar* ProgressBar, float CurrentValue, float MaxValue) const;
 	void UnbindFromCurrentPlayer();
+
+	UPROPERTY(Transient)
+	TObjectPtr<AShapedGameModeBase> BoundGameMode;
 };

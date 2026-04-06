@@ -2,17 +2,25 @@
 
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
+#include "Core/ShapedGameModeBase.h"
 #include "Gameplay/ShapedPlayerCharacter.h"
 
 void UPlayerStatusWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
+	UpdatePhaseDisplay();
 }
 
 void UPlayerStatusWidget::NativeDestruct()
 {
 	UnbindFromCurrentPlayer();
 	Super::NativeDestruct();
+}
+
+void UPlayerStatusWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
+{
+	Super::NativeTick(MyGeometry, InDeltaTime);
+	UpdatePhaseDisplay();
 }
 
 void UPlayerStatusWidget::BindToPlayer(AShapedPlayerCharacter* InPlayerCharacter)
@@ -67,6 +75,39 @@ void UPlayerStatusWidget::UpdateStaminaDisplay(float NewStamina, float MaxStamin
 	}
 
 	SetBarPercent(StaminaBar, NewStamina, MaxStamina);
+}
+
+void UPlayerStatusWidget::UpdatePhaseDisplay()
+{
+	BoundGameMode = GetWorld() ? Cast<AShapedGameModeBase>(GetWorld()->GetAuthGameMode()) : nullptr;
+
+	if (!BoundGameMode)
+	{
+		if (PhaseLabel)
+		{
+			PhaseLabel->SetText(FText::GetEmpty());
+		}
+
+		if (PhaseTimerText)
+		{
+			PhaseTimerText->SetText(FText::GetEmpty());
+		}
+
+		return;
+	}
+
+	if (PhaseLabel)
+	{
+		PhaseLabel->SetText(BoundGameMode->GetPhaseTimerLabel());
+	}
+
+	if (PhaseTimerText)
+	{
+		const int32 RemainingSeconds = FMath::Max(0, FMath::CeilToInt(BoundGameMode->GetPhaseTimeRemaining()));
+		const int32 MinutesPart = RemainingSeconds / 60;
+		const int32 SecondsPart = RemainingSeconds % 60;
+		PhaseTimerText->SetText(FText::FromString(FString::Printf(TEXT("%02d:%02d"), MinutesPart, SecondsPart)));
+	}
 }
 
 void UPlayerStatusWidget::SetBarPercent(UProgressBar* ProgressBar, float CurrentValue, float MaxValue) const

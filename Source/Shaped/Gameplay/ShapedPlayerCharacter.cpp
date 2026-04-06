@@ -7,7 +7,7 @@
 #include "Components/SplineComponent.h"
 #include "Components/SplineMeshComponent.h"
 #include "Components/StaticMeshComponent.h"
-#include "Core/ShapedGameStateBase.h"
+#include "Core/ShapedGameModeBase.h"
 #include "DrawDebugHelpers.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
@@ -266,9 +266,9 @@ void AShapedPlayerCharacter::HandlePrimaryActionReleased()
 
 EShapedGamePhase AShapedPlayerCharacter::GetCurrentGamePhase() const
 {
-	if (const AShapedGameStateBase* ShapedGameState = GetWorld() ? GetWorld()->GetGameState<AShapedGameStateBase>() : nullptr)
+	if (const AShapedGameModeBase* ShapedGameMode = GetWorld() ? Cast<AShapedGameModeBase>(GetWorld()->GetAuthGameMode()) : nullptr)
 	{
-		return ShapedGameState->GetCurrentPhase();
+		return ShapedGameMode->GetCurrentPhase();
 	}
 
 	return EShapedGamePhase::Preparation;

@@ -14,6 +14,7 @@ class UStaticMesh;
 class AShapeObject;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnPlayerHealthChangedSignature, float, NewHealth, float, MaxHealth);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnPlayerStaminaChangedSignature, float, NewStamina, float, MaxStamina);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnPlayerDiedSignature);
 
 UCLASS(Blueprintable)
@@ -26,6 +27,9 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category = "Player")
 	FOnPlayerHealthChangedSignature OnPlayerHealthChanged;
+
+	UPROPERTY(BlueprintAssignable, Category = "Player")
+	FOnPlayerStaminaChangedSignature OnPlayerStaminaChanged;
 
 	UPROPERTY(BlueprintAssignable, Category = "Player")
 	FOnPlayerDiedSignature OnPlayerDied;
@@ -50,6 +54,15 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Player")
 	float GetMaxHealth() const { return MaxHealth; }
+
+	UFUNCTION(BlueprintPure, Category = "Player")
+	float GetCurrentStamina() const { return CurrentStamina; }
+
+	UFUNCTION(BlueprintPure, Category = "Player")
+	float GetMaxStamina() const { return MaxStamina; }
+
+	UFUNCTION(BlueprintPure, Category = "Player")
+	bool IsSprinting() const { return bIsSprinting; }
 
 	UFUNCTION(BlueprintPure, Category = "Player")
 	UCameraComponent* GetFirstPersonCamera() const { return FirstPersonCamera; }
@@ -90,6 +103,30 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Player")
 	float CurrentHealth = 100.0f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Player|Movement", meta = (ClampMin = "0.0"))
+	float WalkSpeed = 500.0f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Player|Movement", meta = (ClampMin = "0.0"))
+	float SprintSpeed = 800.0f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Player|Stamina", meta = (ClampMin = "1.0"))
+	float MaxStamina = 100.0f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Player|Stamina")
+	float CurrentStamina = 100.0f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Player|Stamina", meta = (ClampMin = "0.0"))
+	float SprintStaminaDrainPerSecond = 25.0f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Player|Stamina", meta = (ClampMin = "0.0"))
+	float StaminaRegenPerSecond = 20.0f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Player|Stamina", meta = (ClampMin = "0.0"))
+	float StaminaRegenDelay = 0.75f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Player|Movement")
+	bool bIsSprinting = false;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Player|Interaction")
 	bool bIsDragging = false;
@@ -154,8 +191,13 @@ protected:
 	void MoveRight(float Value);
 	void TurnAtRate(float Value);
 	void LookUpAtRate(float Value);
+	void StartSprint();
+	void StopSprint();
 	void HandlePrimaryActionPressed();
 	void HandlePrimaryActionReleased();
+	void UpdateSprintState(float DeltaSeconds);
+	void UpdateMovementSpeed();
+	bool HasMovementInput() const;
 	void AdjustDragDistance(float Value);
 	void IncreaseDragDistance();
 	void DecreaseDragDistance();
@@ -168,4 +210,7 @@ protected:
 	void EnsureDragSplineMeshCount(int32 DesiredCount);
 	void SetDragSplineVisible(bool bVisible);
 	void DrawDragDebugPoint() const;
+
+	bool bSprintInputHeld = false;
+	float TimeSinceLastStaminaUse = 0.0f;
 };

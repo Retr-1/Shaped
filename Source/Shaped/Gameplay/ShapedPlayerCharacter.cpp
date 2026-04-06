@@ -25,7 +25,7 @@ AShapedPlayerCharacter::AShapedPlayerCharacter()
 	bUseControllerRotationRoll = false;
 
 	GetCharacterMovement()->bOrientRotationToMovement = false;
-	GetCharacterMovement()->MaxWalkSpeed = 500.0f;
+	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
 	GetCharacterMovement()->JumpZVelocity = 450.0f;
 	GetCharacterMovement()->AirControl = 0.2f;
 
@@ -54,7 +54,11 @@ void AShapedPlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	CurrentHealth = MaxHealth;
+	CurrentStamina = MaxStamina;
+	TimeSinceLastStaminaUse = StaminaRegenDelay;
+	UpdateMovementSpeed();
 	OnPlayerHealthChanged.Broadcast(CurrentHealth, MaxHealth);
+	OnPlayerStaminaChanged.Broadcast(CurrentStamina, MaxStamina);
 	if (DragSpline)
 	{
 		DragSpline->SetMobility(EComponentMobility::Movable);
@@ -68,6 +72,7 @@ void AShapedPlayerCharacter::BeginPlay()
 void AShapedPlayerCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
+	UpdateSprintState(DeltaSeconds);
 	UpdateHoveredShape();
 	UpdateDraggedShape(DeltaSeconds);
 	UpdateDragSplineVisual();
@@ -91,6 +96,8 @@ void AShapedPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerIn
 
 	PlayerInputComponent->BindAction(TEXT("Jump"), IE_Pressed, this, &ACharacter::Jump);
 	PlayerInputComponent->BindAction(TEXT("Jump"), IE_Released, this, &ACharacter::StopJumping);
+	PlayerInputComponent->BindAction(TEXT("Sprint"), IE_Pressed, this, &AShapedPlayerCharacter::StartSprint);
+	PlayerInputComponent->BindAction(TEXT("Sprint"), IE_Released, this, &AShapedPlayerCharacter::StopSprint);
 	PlayerInputComponent->BindAction(TEXT("Interact"), IE_Pressed, this, &AShapedPlayerCharacter::Interact);
 	PlayerInputComponent->BindAction(TEXT("Fire"), IE_Pressed, this, &AShapedPlayerCharacter::HandlePrimaryActionPressed);
 	PlayerInputComponent->BindAction(TEXT("Fire"), IE_Released, this, &AShapedPlayerCharacter::HandlePrimaryActionReleased);
@@ -171,6 +178,19 @@ void AShapedPlayerCharacter::LookUpAtRate(float Value)
 	AddControllerPitchInput(Value);
 }
 
+void AShapedPlayerCharacter::StartSprint()
+{
+	bSprintInputHeld = true;
+	UpdateMovementSpeed();
+}
+
+void AShapedPlayerCharacter::StopSprint()
+{
+	bSprintInputHeld = false;
+	bIsSprinting = false;
+	UpdateMovementSpeed();
+}
+
 void AShapedPlayerCharacter::HandlePrimaryActionPressed()
 {
 	switch (GetCurrentGamePhase())
@@ -185,6 +205,55 @@ void AShapedPlayerCharacter::HandlePrimaryActionPressed()
 		bIsDragging = false;
 		break;
 	}
+}
+
+void AShapedPlayerCharacter::UpdateSprintState(float DeltaSeconds)
+{
+	TimeSinceLastStaminaUse += DeltaSeconds;
+
+	const bool bCanSprint = bSprintInputHeld && HasMovementInput() && CurrentStamina > 0.0f;
+	const bool bWasSprinting = bIsSprinting;
+	bIsSprinting = bCanSprint;
+
+	float PreviousStamina = CurrentStamina;
+
+	if (bIsSprinting)
+	{
+		CurrentStamina = FMath::Max(0.0f, CurrentStamina - (SprintStaminaDrainPerSecond * DeltaSeconds));
+		TimeSinceLastStaminaUse = 0.0f;
+
+		if (CurrentStamina <= 0.0f)
+		{
+			bIsSprinting = false;
+		}
+	}
+	else if (TimeSinceLastStaminaUse >= StaminaRegenDelay && CurrentStamina < MaxStamina)
+	{
+		CurrentStamina = FMath::Min(MaxStamina, CurrentStamina + (StaminaRegenPerSecond * DeltaSeconds));
+	}
+
+	if (!FMath::IsNearlyEqual(PreviousStamina, CurrentStamina))
+	{
+		OnPlayerStaminaChanged.Broadcast(CurrentStamina, MaxStamina);
+	}
+
+	if (bWasSprinting != bIsSprinting)
+	{
+		UpdateMovementSpeed();
+	}
+}
+
+void AShapedPlayerCharacter::UpdateMovementSpeed()
+{
+	if (UCharacterMovementComponent* MovementComponent = GetCharacterMovement())
+	{
+		MovementComponent->MaxWalkSpeed = bIsSprinting ? SprintSpeed : WalkSpeed;
+	}
+}
+
+bool AShapedPlayerCharacter::HasMovementInput() const
+{
+	return !GetLastMovementInputVector().IsNearlyZero();
 }
 
 void AShapedPlayerCharacter::HandlePrimaryActionReleased()

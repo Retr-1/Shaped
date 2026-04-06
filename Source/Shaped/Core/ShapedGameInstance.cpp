@@ -3,7 +3,10 @@
 #include "AssetRegistry/AssetData.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "Engine/Texture2D.h"
+#include "Logging/LogMacros.h"
 #include "Modules/ModuleManager.h"
+
+DEFINE_LOG_CATEGORY_STATIC(LogShapedGameInstance, Log, All);
 
 void UShapedGameInstance::Init()
 {
@@ -51,6 +54,26 @@ bool UShapedGameInstance::PeekAmmo(FName& OutAmmoId) const
 	return true;
 }
 
+TArray<FName> UShapedGameInstance::GetTopAmmo(int32 MaxCount) const
+{
+	TArray<FName> Result;
+
+	if (MaxCount <= 0 || AmmoStack.IsEmpty())
+	{
+		return Result;
+	}
+
+	const int32 CountToCopy = FMath::Min(MaxCount, AmmoStack.Num());
+	Result.Reserve(CountToCopy);
+
+	for (int32 Index = AmmoStack.Num() - 1; Index >= 0 && Result.Num() < CountToCopy; --Index)
+	{
+		Result.Add(AmmoStack[Index]);
+	}
+
+	return Result;
+}
+
 void UShapedGameInstance::ClearAmmo()
 {
 	AmmoStack.Reset();
@@ -59,9 +82,11 @@ void UShapedGameInstance::ClearAmmo()
 void UShapedGameInstance::ReloadAmmoIconMap()
 {
 	AmmoIconMap.Reset();
+	LoadedAmmoIcons.Reset();
 
 	if (AmmoIconDirectory.Path.IsEmpty())
 	{
+		UE_LOG(LogShapedGameInstance, Warning, TEXT("AmmoIconDirectory is empty."));
 		return;
 	}
 
@@ -77,14 +102,15 @@ void UShapedGameInstance::ReloadAmmoIconMap()
 			continue;
 		}
 
-		const FName AmmoId = AssetData.AssetName;
-		AmmoIconMap.Add(AmmoId, TSoftObjectPtr<UTexture2D>(AssetData.ToSoftObjectPath()));
+		AmmoIconMap.Add(AssetData.AssetName, AssetData.ToSoftObjectPath());
 	}
+
+	UE_LOG(LogShapedGameInstance, Log, TEXT("Loaded %d ammo icons from '%s'."), AmmoIconMap.Num(), *AmmoIconDirectory.Path);
 }
 
 bool UShapedGameInstance::HasAmmoIcon(FName AmmoId) const
 {
-	return AmmoIconMap.Contains(AmmoId);
+	return !AmmoId.IsNone() && AmmoIconMap.Contains(AmmoId);
 }
 
 UTexture2D* UShapedGameInstance::GetAmmoIcon(FName AmmoId)
@@ -94,11 +120,25 @@ UTexture2D* UShapedGameInstance::GetAmmoIcon(FName AmmoId)
 		return nullptr;
 	}
 
-	TSoftObjectPtr<UTexture2D>* IconPtr = AmmoIconMap.Find(AmmoId);
-	if (!IconPtr)
+	if (TObjectPtr<UTexture2D>* CachedTexture = LoadedAmmoIcons.Find(AmmoId))
 	{
+		return CachedTexture->Get();
+	}
+
+	FSoftObjectPath* IconPath = AmmoIconMap.Find(AmmoId);
+	if (!IconPath)
+	{
+		UE_LOG(LogShapedGameInstance, Warning, TEXT("No ammo icon asset registered for '%s' in '%s'."), *AmmoId.ToString(), *AmmoIconDirectory.Path);
 		return nullptr;
 	}
 
-	return IconPtr->LoadSynchronous();
+	UTexture2D* LoadedTexture = Cast<UTexture2D>(IconPath->TryLoad());
+	if (!LoadedTexture)
+	{
+		UE_LOG(LogShapedGameInstance, Warning, TEXT("Failed to load ammo icon asset '%s' for ammo id '%s'."), *IconPath->ToString(), *AmmoId.ToString());
+		return nullptr;
+	}
+
+	LoadedAmmoIcons.Add(AmmoId, LoadedTexture);
+	return LoadedTexture;
 }

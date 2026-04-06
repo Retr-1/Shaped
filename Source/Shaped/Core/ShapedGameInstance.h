@@ -32,6 +32,9 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Ammo")
 	const TArray<FName>& GetAmmoStack() const { return AmmoStack; }
 
+	UFUNCTION(BlueprintPure, Category = "Ammo")
+	TArray<FName> GetTopAmmo(int32 MaxCount) const;
+
 	UFUNCTION(BlueprintCallable, Category = "Ammo Icons")
 	void ReloadAmmoIconMap();
 
@@ -49,5 +52,8 @@ protected:
 	FDirectoryPath AmmoIconDirectory;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Ammo Icons")
-	TMap<FName, TSoftObjectPtr<UTexture2D>> AmmoIconMap;
+	TMap<FName, FSoftObjectPath> AmmoIconMap;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Ammo Icons")
+	TMap<FName, TObjectPtr<UTexture2D>> LoadedAmmoIcons;
 };

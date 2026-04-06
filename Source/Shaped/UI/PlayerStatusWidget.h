@@ -6,6 +6,7 @@
 
 class AShapedPlayerCharacter;
 class AShapedGameModeBase;
+class UImage;
 class UProgressBar;
 class UTextBlock;
 
@@ -44,6 +45,21 @@ protected:
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidgetOptional))
 	TObjectPtr<UTextBlock> PhaseTimerText;
 
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidgetOptional))
+	TObjectPtr<UImage> AmmoIcon0;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidgetOptional))
+	TObjectPtr<UImage> AmmoIcon1;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidgetOptional))
+	TObjectPtr<UImage> AmmoIcon2;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidgetOptional))
+	TObjectPtr<UImage> AmmoIcon3;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidgetOptional))
+	TObjectPtr<UImage> AmmoIcon4;
+
 	UFUNCTION()
 	void HandleHealthChanged(float NewHealth, float MaxHealth);
 
@@ -54,9 +70,13 @@ private:
 	void UpdateHealthDisplay(float NewHealth, float MaxHealth);
 	void UpdateStaminaDisplay(float NewStamina, float MaxStamina);
 	void UpdatePhaseDisplay();
+	void UpdateAmmoDisplay();
 	void SetBarPercent(UProgressBar* ProgressBar, float CurrentValue, float MaxValue) const;
 	void UnbindFromCurrentPlayer();
 
 	UPROPERTY(Transient)
 	TObjectPtr<AShapedGameModeBase> BoundGameMode;
+
+	UPROPERTY(Transient)
+	TArray<TObjectPtr<UImage>> AmmoIconWidgets;
 };

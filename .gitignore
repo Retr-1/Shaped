@@ -2,6 +2,8 @@
 .vs/
 .idea/
 
+Tools/Generated/
+
 # Compiled Object files
 *.slo
 *.lo

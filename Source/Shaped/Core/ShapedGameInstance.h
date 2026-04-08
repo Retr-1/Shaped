@@ -6,6 +6,8 @@
 
 class UTexture2D;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnAmmoStackChangedSignature);
+
 UCLASS()
 class SHAPED_API UShapedGameInstance : public UGameInstance
 {
@@ -13,6 +15,9 @@ class SHAPED_API UShapedGameInstance : public UGameInstance
 
 public:
 	virtual void Init() override;
+
+	UPROPERTY(BlueprintAssignable, Category = "Ammo")
+	FOnAmmoStackChangedSignature OnAmmoStackChanged;
 
 	UFUNCTION(BlueprintCallable, Category = "Ammo")
 	void PushAmmo(FName AmmoId);
@@ -56,4 +61,6 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Ammo Icons")
 	TMap<FName, TObjectPtr<UTexture2D>> LoadedAmmoIcons;
+
+
 };

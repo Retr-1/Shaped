@@ -7,20 +7,20 @@
 #include "Core/ShapedGameModeBase.h"
 #include "Engine/Texture2D.h"
 #include "Gameplay/ShapedPlayerCharacter.h"
-#include "Kismet/KismetStringLibrary.h"
-#include "Kismet/KismetSystemLibrary.h"
 #include "Styling/SlateBrush.h"
 
 void UPlayerStatusWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
 	AmmoIconWidgets = { AmmoIcon0, AmmoIcon1, AmmoIcon2, AmmoIcon3, AmmoIcon4 };
+	BindToGameInstance();
 	UpdatePhaseDisplay();
 	UpdateAmmoDisplay();
 }
 
 void UPlayerStatusWidget::NativeDestruct()
 {
+	UnbindFromGameInstance();
 	UnbindFromCurrentPlayer();
 	Super::NativeDestruct();
 }
@@ -29,7 +29,6 @@ void UPlayerStatusWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaT
 {
 	Super::NativeTick(MyGeometry, InDeltaTime);
 	UpdatePhaseDisplay();
-	UpdateAmmoDisplay();
 }
 
 void UPlayerStatusWidget::BindToPlayer(AShapedPlayerCharacter* InPlayerCharacter)
@@ -64,6 +63,11 @@ void UPlayerStatusWidget::HandleHealthChanged(float NewHealth, float MaxHealth)
 void UPlayerStatusWidget::HandleStaminaChanged(float NewStamina, float MaxStamina)
 {
 	UpdateStaminaDisplay(NewStamina, MaxStamina);
+}
+
+void UPlayerStatusWidget::HandleAmmoStackChanged()
+{
+	UpdateAmmoDisplay();
 }
 
 void UPlayerStatusWidget::UpdateHealthDisplay(float NewHealth, float MaxHealth)
@@ -141,7 +145,6 @@ void UPlayerStatusWidget::UpdateAmmoDisplay()
 		UTexture2D* IconTexture = ShapedGameInstance->GetAmmoIcon(TopAmmoIds[Index]);
 		if (!IconTexture)
 		{
-			UKismetSystemLibrary::PrintText(this, FText::FromString("NOTTTT"));
 			AmmoIconWidget->SetVisibility(ESlateVisibility::Collapsed);
 			continue;
 		}
@@ -172,4 +175,27 @@ void UPlayerStatusWidget::UnbindFromCurrentPlayer()
 	BoundPlayerCharacter->OnPlayerHealthChanged.RemoveDynamic(this, &UPlayerStatusWidget::HandleHealthChanged);
 	BoundPlayerCharacter->OnPlayerStaminaChanged.RemoveDynamic(this, &UPlayerStatusWidget::HandleStaminaChanged);
 	BoundPlayerCharacter = nullptr;
+}
+
+void UPlayerStatusWidget::BindToGameInstance()
+{
+	BoundGameInstance = GetWorld() ? GetWorld()->GetGameInstance<UShapedGameInstance>() : nullptr;
+	if (!BoundGameInstance)
+	{
+		return;
+	}
+
+	BoundGameInstance->OnAmmoStackChanged.RemoveDynamic(this, &UPlayerStatusWidget::HandleAmmoStackChanged);
+	BoundGameInstance->OnAmmoStackChanged.AddDynamic(this, &UPlayerStatusWidget::HandleAmmoStackChanged);
+}
+
+void UPlayerStatusWidget::UnbindFromGameInstance()
+{
+	if (!BoundGameInstance)
+	{
+		return;
+	}
+
+	BoundGameInstance->OnAmmoStackChanged.RemoveDynamic(this, &UPlayerStatusWidget::HandleAmmoStackChanged);
+	BoundGameInstance = nullptr;
 }

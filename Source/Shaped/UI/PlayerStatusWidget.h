@@ -6,6 +6,7 @@
 
 class AShapedPlayerCharacter;
 class AShapedGameModeBase;
+class UShapedGameInstance;
 class UImage;
 class UProgressBar;
 class UTextBlock;
@@ -66,6 +67,9 @@ protected:
 	UFUNCTION()
 	void HandleStaminaChanged(float NewStamina, float MaxStamina);
 
+	UFUNCTION()
+	void HandleAmmoStackChanged();
+
 private:
 	void UpdateHealthDisplay(float NewHealth, float MaxHealth);
 	void UpdateStaminaDisplay(float NewStamina, float MaxStamina);
@@ -73,9 +77,14 @@ private:
 	void UpdateAmmoDisplay();
 	void SetBarPercent(UProgressBar* ProgressBar, float CurrentValue, float MaxValue) const;
 	void UnbindFromCurrentPlayer();
+	void BindToGameInstance();
+	void UnbindFromGameInstance();
 
 	UPROPERTY(Transient)
 	TObjectPtr<AShapedGameModeBase> BoundGameMode;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UShapedGameInstance> BoundGameInstance;
 
 	UPROPERTY(Transient)
 	TArray<TObjectPtr<UImage>> AmmoIconWidgets;

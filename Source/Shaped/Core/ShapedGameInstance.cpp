@@ -28,6 +28,7 @@ void UShapedGameInstance::PushAmmo(FName AmmoId)
 	}
 
 	AmmoStack.Add(AmmoId);
+	OnAmmoStackChanged.Broadcast();
 }
 
 bool UShapedGameInstance::PopAmmo(FName& OutAmmoId)
@@ -39,6 +40,7 @@ bool UShapedGameInstance::PopAmmo(FName& OutAmmoId)
 	}
 
 	OutAmmoId = AmmoStack.Pop(EAllowShrinking::No);
+	OnAmmoStackChanged.Broadcast();
 	return true;
 }
 
@@ -77,6 +79,7 @@ TArray<FName> UShapedGameInstance::GetTopAmmo(int32 MaxCount) const
 void UShapedGameInstance::ClearAmmo()
 {
 	AmmoStack.Reset();
+	OnAmmoStackChanged.Broadcast();
 }
 
 void UShapedGameInstance::ReloadAmmoIconMap()
@@ -142,3 +145,4 @@ UTexture2D* UShapedGameInstance::GetAmmoIcon(FName AmmoId)
 	LoadedAmmoIcons.Add(AmmoId, LoadedTexture);
 	return LoadedTexture;
 }
+

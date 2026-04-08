@@ -150,6 +150,7 @@ void UPlayerStatusWidget::UpdateAmmoDisplay()
 		}
 
 		AmmoIconWidget->SetBrushFromTexture(IconTexture, true);
+		AmmoIconWidget->SetBrushSize(FVector2D(254,45));
 		AmmoIconWidget->SetVisibility(ESlateVisibility::Visible);
 	}
 }

@@ -34,13 +34,4 @@ enum class EShapeColor : uint8
 
 
 
-USTRUCT(BlueprintType)
-struct SHAPED_API FEnemyAmmoRequirement
-{
-	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat")
-	TArray<FName> RequiredAmmoSequence;
-};
-
 

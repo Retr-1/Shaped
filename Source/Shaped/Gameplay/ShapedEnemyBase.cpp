@@ -1,49 +1,85 @@
 #include "Gameplay/ShapedEnemyBase.h"
-
+#include "UI/EnemyStatusWidget.h"
 #include "Gameplay/BaseCore.h"
 
 AShapedEnemyBase::AShapedEnemyBase()
 {
 	PrimaryActorTick.bCanEverTick = true;
+	
+	OverheadWidgetComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("OverheadWidgetComponent"));
+	OverheadWidgetComponent->SetupAttachment(GetRootComponent());
+	OverheadWidgetComponent->SetRelativeLocation(FVector(0.0f, 0.0f, 120.0f));
+	OverheadWidgetComponent->SetWidgetSpace(EWidgetSpace::World);
+	OverheadWidgetComponent->SetDrawSize(FVector2D(200.f, 50.f));
+
 }
 
 bool AShapedEnemyBase::ApplyAmmoHit(FName AmmoId)
 {
-	if (!AmmoRequirement.RequiredAmmoSequence.IsValidIndex(ResolvedHitCount))
+	bool WasHit = false;
+	if (IsHitWithCorrectAmmo(AmmoId))
 	{
-		return false;
+		Hits++;
+		WasHit = true;
+		OnHit.Broadcast(this);
 	}
-
-	if (AmmoRequirement.RequiredAmmoSequence[ResolvedHitCount] != AmmoId)
+	
+	if (Hits >= AmmoRequirement.Num())
 	{
-		OnWrongAmmoHit(AmmoId);
-		return false;
+		Destroy();
 	}
-
-	++ResolvedHitCount;
-
-	if (ResolvedHitCount >= AmmoRequirement.RequiredAmmoSequence.Num())
-	{
-		DefeatEnemy();
-	}
-
-	return true;
+	return WasHit;
 }
 
-void AShapedEnemyBase::ReachBase(ABaseCore* BaseCore)
+bool AShapedEnemyBase::IsHitWithCorrectAmmo(FName AmmoId)
 {
-	if (BaseCore)
-	{
-		BaseCore->ApplyBaseDamage(ContactDamage);
+	TArray<TCHAR> IncomingAmmo = AmmoId.ToString().GetCharArray();
+	TArray<TCHAR> Requirement = AmmoRequirement[Hits].ToString().GetCharArray();
+	
+	const TArray<TCHAR> Colors = {
+		TEXT('r'),
+		TEXT('g'),
+		TEXT('b'),
+		TEXT('y'),
+	};
+	
+	const TCHAR wildcard = TEXT('w');
+	
+	int Matched = 0;
+	
+	for (const TCHAR &Color : Colors) {
+		int InC = 0;
+		int ReqC = 0;
+		
+		for (int i=0; i<3; i++) {
+			InC += IncomingAmmo[i] == Color;
+			ReqC += Requirement[i] == Color;
+		}
+		
+		Matched += FMath::Min(InC, ReqC);
 	}
-
-	OnEnemyReachedBase();
-	Destroy();
+	
+	for (int i=0; i<3; i++) {
+		Matched += IncomingAmmo[i] == wildcard;
+		Matched += Requirement[i] == wildcard;
+	}
+	
+	return Matched >= 3;
 }
 
-void AShapedEnemyBase::DefeatEnemy()
-{
-	OnEnemyDefeated.Broadcast(this);
-	OnEnemyDefeatedVisuals();
-	Destroy();
+int AShapedEnemyBase::GetHits() {
+	return Hits;
 }
+
+void AShapedEnemyBase::BeginPlay() {
+	Super::BeginPlay();
+	
+	OverheadWidgetComponent->SetWidgetClass(OverheadWidgetClass);
+	OverheadWidgetComponent->InitWidget();
+	if (UEnemyStatusWidget* StatusWidget = Cast<UEnemyStatusWidget>(OverheadWidgetComponent->GetWidget())) {
+		StatusWidget->SetOwningEnemy(this);
+	}
+	
+	OnHit.Broadcast(this);
+}
+

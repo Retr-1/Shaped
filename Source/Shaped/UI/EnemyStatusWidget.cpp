@@ -20,7 +20,7 @@ void UEnemyStatusWidget::OnOwnerHit(AShapedEnemyBase* Character) {
 	UShapedGameInstance *GI = GetGameInstance<UShapedGameInstance>();
 	AmmoVerticalBox->ClearChildren();
 	
-	for (int i=Character->GetHits(); i<Character->AmmoRequirement.Num(); i++) {
+	for (int i=0; i<Character->AmmoRequirement.Num(); i++) {
 		FName ammoId = Character->AmmoRequirement[i];
 		UTexture2D *ammoIcon = GI->GetAmmoIcon(ammoId);
 		UImage* Image = NewObject<UImage>(this);

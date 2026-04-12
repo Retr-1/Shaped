@@ -1,6 +1,7 @@
 #include "Gameplay/ShapedEnemyBase.h"
 #include "UI/EnemyStatusWidget.h"
 #include "Gameplay/BaseCore.h"
+#include "Kismet/KismetSystemLibrary.h"
 
 AShapedEnemyBase::AShapedEnemyBase()
 {
@@ -19,12 +20,12 @@ bool AShapedEnemyBase::ApplyAmmoHit(FName AmmoId)
 	bool WasHit = false;
 	if (IsHitWithCorrectAmmo(AmmoId))
 	{
-		Hits++;
+		AmmoRequirement.Pop();
 		WasHit = true;
 		OnHit.Broadcast(this);
 	}
 	
-	if (Hits >= AmmoRequirement.Num())
+	if (AmmoRequirement.Num() == 0)
 	{
 		Destroy();
 	}
@@ -33,8 +34,10 @@ bool AShapedEnemyBase::ApplyAmmoHit(FName AmmoId)
 
 bool AShapedEnemyBase::IsHitWithCorrectAmmo(FName AmmoId)
 {
+	UKismetSystemLibrary::PrintString(this, "Incoming: " + AmmoId.ToString() + " Want to hit: " + AmmoRequirement.Top().ToString());
+	
 	TArray<TCHAR> IncomingAmmo = AmmoId.ToString().GetCharArray();
-	TArray<TCHAR> Requirement = AmmoRequirement[Hits].ToString().GetCharArray();
+	TArray<TCHAR> Requirement = AmmoRequirement.Top().ToString().GetCharArray();
 	
 	const TArray<TCHAR> Colors = {
 		TEXT('r'),
@@ -67,9 +70,6 @@ bool AShapedEnemyBase::IsHitWithCorrectAmmo(FName AmmoId)
 	return Matched >= 3;
 }
 
-int AShapedEnemyBase::GetHits() {
-	return Hits;
-}
 
 void AShapedEnemyBase::BeginPlay() {
 	Super::BeginPlay();

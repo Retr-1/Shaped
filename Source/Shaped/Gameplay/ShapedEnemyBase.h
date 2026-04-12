@@ -17,7 +17,10 @@ class SHAPED_API AShapedEnemyBase : public ACharacter
 
 public:
 	AShapedEnemyBase();
+	
+	UFUNCTION(BlueprintCallable)
 	bool ApplyAmmoHit(FName AmmoId);
+	
 	bool IsHitWithCorrectAmmo(FName AmmoId);
 
 	UPROPERTY(BlueprintAssignable, Category = "Enemy")
@@ -28,10 +31,8 @@ public:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<FName> AmmoRequirement;
-	
-	int GetHits();
+
 protected:
-	int Hits = 0;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="UI")
 	UWidgetComponent* OverheadWidgetComponent;

@@ -67,6 +67,7 @@ void AShapedPlayerCharacter::BeginPlay()
 	EnsureDragSplineMeshCount(DragTubeSegmentCount);
 
 	SetDragSplineVisible(false);
+	
 }
 
 void AShapedPlayerCharacter::Tick(float DeltaSeconds)

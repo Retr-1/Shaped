@@ -18,7 +18,8 @@ enum class EShapeType : uint8
 	Sphere,
 	Pyramid,
 	Dodecahedron,
-	Wildcard
+	Torus,
+	Cylinder,
 };
 
 UENUM(BlueprintType)

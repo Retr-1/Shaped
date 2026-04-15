@@ -76,7 +76,10 @@ UStaticMesh* AShapeObject::ResolveMeshForType() const
 		return PyramidMesh;
 	case EShapeType::Dodecahedron:
 		return DodecahedronMesh;
-	case EShapeType::Wildcard:
+	case EShapeType::Torus:
+		return TorusMesh;
+	case EShapeType::Cylinder:
+		return CylinderMesh;
 	default:
 		return SphereMesh ? SphereMesh : BoxMesh;
 	}

@@ -42,10 +42,10 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Shape")
 	TObjectPtr<UStaticMeshComponent> ShapeMeshComponent;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Shape")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Shape", meta=(ExposeOnSpawn="true"))
 	EShapeType ShapeType = EShapeType::Box;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Shape")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Shape", meta=(ExposeOnSpawn="true"))
 	EShapeColor ShapeColor = EShapeColor::Red;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Shape", meta = (ClampMin = "0.1"))
@@ -62,6 +62,12 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Shape|Meshes")
 	TObjectPtr<UStaticMesh> DodecahedronMesh;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Shape|Meshes")
+	TObjectPtr<UStaticMesh> TorusMesh;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Shape|Meshes")
+	TObjectPtr<UStaticMesh> CylinderMesh;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Shape|Material")
 	TObjectPtr<UMaterialInterface> BaseMaterial;

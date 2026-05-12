@@ -111,16 +111,10 @@ void UPlayerStatusWidget::UpdatePhaseDisplay()
 
 	if (PhaseLabel)
 	{
-		PhaseLabel->SetText(BoundGameMode->GetPhaseTimerLabel());
+		PhaseLabel->SetText(BoundGameMode->GetPhaseLabel());
 	}
-
-	if (PhaseTimerText)
-	{
-		const int32 RemainingSeconds = FMath::Max(0, FMath::CeilToInt(BoundGameMode->GetPhaseTimeRemaining()));
-		const int32 MinutesPart = RemainingSeconds / 60;
-		const int32 SecondsPart = RemainingSeconds % 60;
-		PhaseTimerText->SetText(FText::FromString(FString::Printf(TEXT("%02d:%02d"), MinutesPart, SecondsPart)));
-	}
+	
+	
 }
 
 void UPlayerStatusWidget::UpdateAmmoDisplay()

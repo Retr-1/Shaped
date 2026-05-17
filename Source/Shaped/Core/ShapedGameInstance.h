@@ -18,6 +18,12 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category = "Ammo")
 	FOnAmmoStackChangedSignature OnAmmoStackChanged;
+	
+	UFUNCTION(BlueprintCallable, Category="Ammo")
+	void BroadcastAmmoStackChanged();
+	
+	UFUNCTION(BlueprintCallable, Category = "Ammo")
+	void MakeTopAmmoWildcard();
 
 	UFUNCTION(BlueprintCallable, Category = "Ammo")
 	void PushAmmo(FName AmmoId);

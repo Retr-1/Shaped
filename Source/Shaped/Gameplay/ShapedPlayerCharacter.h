@@ -116,7 +116,7 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Player|Stamina")
 	float CurrentStamina = 100.0f;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Player|Stamina", meta = (ClampMin = "0.0"))
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Player|Stamina", meta = (ClampMin = "0.0"))
 	float SprintStaminaDrainPerSecond = 25.0f;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Player|Stamina", meta = (ClampMin = "0.0"))

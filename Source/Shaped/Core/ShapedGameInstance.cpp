@@ -20,6 +20,18 @@ void UShapedGameInstance::Init()
 	ReloadAmmoIconMap();
 }
 
+void UShapedGameInstance::BroadcastAmmoStackChanged() {
+	OnAmmoStackChanged.Broadcast();
+}
+
+void UShapedGameInstance::MakeTopAmmoWildcard() {
+	if (AmmoStack.IsEmpty())
+		return;
+	
+	AmmoStack[AmmoStack.Num()-1] = FName(TEXT("www"));
+	OnAmmoStackChanged.Broadcast();
+}
+
 void UShapedGameInstance::PushAmmo(FName AmmoId)
 {
 	if (AmmoId.IsNone())

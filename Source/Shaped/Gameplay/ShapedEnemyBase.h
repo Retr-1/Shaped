@@ -40,6 +40,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category="UI")
 	TSubclassOf<UEnemyStatusWidget> OverheadWidgetClass;
 	
+	UFUNCTION(BlueprintImplementableEvent, Category="Enemy")
+	void OnAllHealthLost();
+	
 	virtual void BeginPlay() override;
 	
 };

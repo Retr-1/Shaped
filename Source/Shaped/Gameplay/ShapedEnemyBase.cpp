@@ -27,7 +27,7 @@ bool AShapedEnemyBase::ApplyAmmoHit(FName AmmoId)
 	
 	if (AmmoRequirement.Num() == 0)
 	{
-		Destroy();
+		OnAllHealthLost();
 	}
 	return WasHit;
 }

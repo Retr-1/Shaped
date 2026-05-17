@@ -104,13 +104,13 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Player")
 	float CurrentHealth = 100.0f;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Player|Movement", meta = (ClampMin = "0.0"))
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Player|Movement", meta = (ClampMin = "0.0"))
 	float WalkSpeed = 500.0f;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Player|Movement", meta = (ClampMin = "0.0"))
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Player|Movement", meta = (ClampMin = "0.0"))
 	float SprintSpeed = 800.0f;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Player|Stamina", meta = (ClampMin = "1.0"))
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Player|Stamina", meta = (ClampMin = "1.0"))
 	float MaxStamina = 100.0f;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Player|Stamina")

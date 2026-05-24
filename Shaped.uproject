@@ -29,10 +29,6 @@
 		{
 			"Name": "ProceduralVegetationEditor",
 			"Enabled": true
-		},
-		{
-			"Name": "SunPosition",
-			"Enabled": true
 		}
 	]
 }

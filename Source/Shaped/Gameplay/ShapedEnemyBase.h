@@ -26,7 +26,7 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Enemy")
 	FOnEnemyDefeatedSignature OnEnemyDefeated;
 	
-	UPROPERTY(BlueprintAssignable, Category= "Enemy")
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category= "Enemy")
 	FOnHitSignature OnHit;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)

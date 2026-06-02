@@ -78,10 +78,10 @@ void AShapedPlayerCharacter::Tick(float DeltaSeconds)
 	UpdateDraggedShape(DeltaSeconds);
 	UpdateDragSplineVisual();
 
-	if (bIsDragging)
-	{
-		DrawDragDebugPoint();
-	}
+	// if (bIsDragging)
+	// {
+	// 	DrawDragDebugPoint();
+	// }
 }
 
 void AShapedPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -400,11 +400,11 @@ void AShapedPlayerCharacter::UpdateDraggedShape(float DeltaSeconds)
 		return;
 	}
 
-	if (!IsDraggedShapeOnScreen())
-	{
-		StopDragging();
-		return;
-	}
+	// if (!IsDraggedShapeOnScreen())
+	// {
+	// 	StopDragging();
+	// 	return;
+	// }
 
 	const float DistanceToDraggedObject = FVector::Dist(GetActorLocation(), CurrentDraggedShape->GetActorLocation());
 	if (DistanceToDraggedObject > MaxDragDistance)

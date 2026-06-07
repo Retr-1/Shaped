@@ -12,10 +12,10 @@ void UShapedGameInstance::Init()
 {
 	Super::Init();
 
-	PushAmmo(FName(TEXT("bbr")));
-	PushAmmo(FName(TEXT("rgb")));
-	PushAmmo(FName(TEXT("yyy")));
-	PushAmmo(FName(TEXT("gbw")));
+	// PushAmmo(FName(TEXT("bbr")));
+	// PushAmmo(FName(TEXT("rgb")));
+	// PushAmmo(FName(TEXT("yyy")));
+	// PushAmmo(FName(TEXT("gbw")));
 
 	ReloadAmmoIconMap();
 }
